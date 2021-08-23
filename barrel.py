@@ -22,39 +22,12 @@ HTS_df_total.drop(['GYEAR', 'G_ID', 'PIT_ID', 'PCODE', 'T_ID', 'INN', 'STADIUM',
 HTS_df_total = HTS_df_total[['HIT_VEL', 'HIT_ANG_VER']]
 
 
-HTS_df_int = HTS_df_total.astype(int)
-HTS_df_int[['HIT_VEL']].value_counts()
-HTS_df_int[['HIT_ANG_VER']].value_counts()
+sam_data = HTS_df_total.iloc[0:1000, 0:2].values 
+standard_scaler = StandardScaler()
+sam_data_scaled = pd.DataFrame(standard_scaler.fit_transform(sam_data))
 
-HTS_df_int.describe()
-HTS_df_int = HTS_df_int.assign(label = 0)
+data = [sam_data,sam_data_scaled]
 
-
-sns.distplot(HTS_df_int['HIT_VEL'])
-sns.distplot(HTS_df_int['HIT_ANG_VER'])
-HIT_VEL_list = []
-HIT_ANG_VER_list = []
-
-for j in HTS_df_int['HIT_VEL']:
-    if not j in HIT_VEL_list:
-        HIT_VEL_list.append(j)
-
-for j in HTS_df_int['HIT_ANG_VER']:
-    if not j in HIT_VEL_list:
-        HIT_ANG_VER_list.append(j)
-
-for i in HIT_VEL_list:
-    for j in HIT_ANG_VER_list:
-
-sam_data = HTS_df_total.iloc[0:50000, 0:2].values 
-
-data = [sam_data,HTS_scaled_df.iloc[0:100, 0:2].values]
-# =============================================================================
-#         
-# plt.figure(figsize=(10, 7))
-# plt.title("Customer Dendograms")
-# dend = shc.dendrogram(shc.linkage(data, method='ward'))        
-# =============================================================================
 linkage_list = ['single', 'complete', 'average', 'centroid', 'ward']        
 
 fig, axes = plt.subplots(nrows=len(linkage_list), ncols=2, figsize=(16, 35))
@@ -72,18 +45,8 @@ labels = agg_clustering.fit_predict(sam_data)
 plt.figure(figsize=(20, 6))
 plt.subplot(131)
 sns.scatterplot(x=sam_data[:,0], y=sam_data[:,1], data=sam_data, hue=labels, palette='Set2')
-# =============================================================================
-# cnt = 0
-# for i in HIT_VEL_list:
-#     for j in HIT_ANG_VER_list:
-#         cnt += 1
-#         for k in range(len(HTS_df_int)):
-#             if i == HTS_df_int.loc[k][0] and j == HTS_df_int.loc[k][1]:
-#                 HTS_df_int.loc[k,'label'] = cnt
-# =============================================================================
 
-standard_scaler = StandardScaler()
-HTS_scaled_df = pd.DataFrame(standard_scaler.fit_transform(HTS_df_total), columns=HTS_df_total.columns)
+
 
 # =============================================================================
 # dbscan = DBSCAN(eps=0.1,min_samples=25)
@@ -106,4 +69,46 @@ HTS_scaled_df = pd.DataFrame(standard_scaler.fit_transform(HTS_df_total), column
 # plt.scatter(HTS_df_total.index,HTS_df_total[['HIT_ANG_VER']])
 # plt.show()
 # 
+# =============================================================================
+# =============================================================================
+# 
+# HTS_df_int = HTS_df_total.astype(int)
+# HTS_df_int[['HIT_VEL']].value_counts()
+# HTS_df_int[['HIT_ANG_VER']].value_counts()
+# 
+# HTS_df_int.describe()
+# HTS_df_int = HTS_df_int.assign(label = 0)
+# 
+# 
+# sns.distplot(HTS_df_int['HIT_VEL'])
+# sns.distplot(HTS_df_int['HIT_ANG_VER'])
+# HIT_VEL_list = []
+# HIT_ANG_VER_list = []
+# 
+# for j in HTS_df_int['HIT_VEL']:
+#     if not j in HIT_VEL_list:
+#         HIT_VEL_list.append(j)
+# 
+# for j in HTS_df_int['HIT_ANG_VER']:
+#     if not j in HIT_VEL_list:
+#         HIT_ANG_VER_list.append(j)
+# 
+# for i in HIT_VEL_list:
+#     for j in HIT_ANG_VER_list:
+# =============================================================================
+# =============================================================================
+#         
+# plt.figure(figsize=(10, 7))
+# plt.title("Customer Dendograms")
+# dend = shc.dendrogram(shc.linkage(data, method='ward'))        
+# =============================================================================
+
+# =============================================================================
+# cnt = 0
+# for i in HIT_VEL_list:
+#     for j in HIT_ANG_VER_list:
+#         cnt += 1
+#         for k in range(len(HTS_df_int)):
+#             if i == HTS_df_int.loc[k][0] and j == HTS_df_int.loc[k][1]:
+#                 HTS_df_int.loc[k,'label'] = cnt
 # =============================================================================
