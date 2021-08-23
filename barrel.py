@@ -7,6 +7,9 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import linkage, dendrogram, ward
 import mglearn
+# =============================================================================
+# import scipy.cluster.hierarchy as shc
+# =============================================================================
 os.chdir('C:/Users/82102/Desktop/bigcon/01_제공데이터')
 
 HTS_df_2018 = pd.read_csv('2021 빅콘테스트_데이터분석분야_챔피언리그_스포츠테크_HTS_2018.csv',encoding='cp949')
@@ -39,18 +42,50 @@ for j in HTS_df_int['HIT_VEL']:
 for j in HTS_df_int['HIT_ANG_VER']:
     if not j in HIT_VEL_list:
         HIT_ANG_VER_list.append(j)
-cnt = 0
+
 for i in HIT_VEL_list:
     for j in HIT_ANG_VER_list:
-        cnt += 1
-        for k in range(len(HTS_df_int)):
-            if i == HTS_df_int.loc[k][0] and j == HTS_df_int.loc[k][1]:
-                HTS_df_int.loc[k,'label'] = cnt
+
+sam_data = HTS_df_total.iloc[0:50000, 0:2].values 
+
+data = [sam_data,HTS_scaled_df.iloc[0:100, 0:2].values]
+# =============================================================================
+#         
+# plt.figure(figsize=(10, 7))
+# plt.title("Customer Dendograms")
+# dend = shc.dendrogram(shc.linkage(data, method='ward'))        
+# =============================================================================
+linkage_list = ['single', 'complete', 'average', 'centroid', 'ward']        
+
+fig, axes = plt.subplots(nrows=len(linkage_list), ncols=2, figsize=(16, 35))
+for i in range(len(linkage_list)):
+    for j in range(len(data)):
+        hierarchical_single = linkage(data[j], method=linkage_list[i])
+        dn = dendrogram(hierarchical_single, ax=axes[i][j])
+        axes[i][j].title.set_text(linkage_list[i])
+plt.show()
+
+
+from sklearn.cluster import AgglomerativeClustering
+agg_clustering = AgglomerativeClustering(n_clusters=10, linkage='ward')
+labels = agg_clustering.fit_predict(sam_data)
+plt.figure(figsize=(20, 6))
+plt.subplot(131)
+sns.scatterplot(x=sam_data[:,0], y=sam_data[:,1], data=sam_data, hue=labels, palette='Set2')
+# =============================================================================
+# cnt = 0
+# for i in HIT_VEL_list:
+#     for j in HIT_ANG_VER_list:
+#         cnt += 1
+#         for k in range(len(HTS_df_int)):
+#             if i == HTS_df_int.loc[k][0] and j == HTS_df_int.loc[k][1]:
+#                 HTS_df_int.loc[k,'label'] = cnt
+# =============================================================================
+
+standard_scaler = StandardScaler()
+HTS_scaled_df = pd.DataFrame(standard_scaler.fit_transform(HTS_df_total), columns=HTS_df_total.columns)
 
 # =============================================================================
-# standard_scaler = StandardScaler()
-# HTS_scaled_df = pd.DataFrame(standard_scaler.fit_transform(HTS_df_total), columns=HTS_df_total.columns)
-# 
 # dbscan = DBSCAN(eps=0.1,min_samples=25)
 # clusters = pd.DataFrame(dbscan.fit_predict(HTS_scaled_df))    
 # clusters.columns=['predict']
@@ -70,4 +105,5 @@ for i in HIT_VEL_list:
 # 
 # plt.scatter(HTS_df_total.index,HTS_df_total[['HIT_ANG_VER']])
 # plt.show()
+# 
 # =============================================================================
