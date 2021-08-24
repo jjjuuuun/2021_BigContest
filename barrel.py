@@ -7,108 +7,84 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from scipy.cluster.hierarchy import linkage, dendrogram, ward
 import mglearn
+from sklearn.cluster import AgglomerativeClustering
 # =============================================================================
 # import scipy.cluster.hierarchy as shc
 # =============================================================================
 os.chdir('C:/Users/82102/Desktop/bigcon/01_제공데이터')
 
-HTS_df_2018 = pd.read_csv('2021 빅콘테스트_데이터분석분야_챔피언리그_스포츠테크_HTS_2018.csv',encoding='cp949')
-HTS_df_2019 = pd.read_csv('2021 빅콘테스트_데이터분석분야_챔피언리그_스포츠테크_HTS_2019.csv',encoding='cp949')
-HTS_df_2020 = pd.read_csv('2021 빅콘테스트_데이터분석분야_챔피언리그_스포츠테크_HTS_2020.csv',encoding='cp949')
-HTS_df_2021 = pd.read_csv('2021 빅콘테스트_데이터분석분야_챔피언리그_스포츠테크_HTS_2021.csv',encoding='cp949')
+#분활된 HTS데이터를 읽어와요
+HTS_one = pd.read_csv('hts_1.csv')
+HTS_two = pd.read_csv('hts_2.csv')
+HTS_three = pd.read_csv('hts_3.csv')
+HTS_four = pd.read_csv('hts_4.csv')
+split_HTS = [HTS_one,HTS_two,HTS_three,HTS_four]
 
-HTS_df_total = pd.concat([HTS_df_2018,HTS_df_2019,HTS_df_2020,HTS_df_2021],ignore_index=True)
-HTS_df_total.drop(['GYEAR', 'G_ID', 'PIT_ID', 'PCODE', 'T_ID', 'INN', 'STADIUM','HIT_RESULT', 'PIT_VEL'],axis=1,inplace=True)
-HTS_df_total = HTS_df_total[['HIT_VEL', 'HIT_ANG_VER']]
+#Agglormerative clustering을 하는 함수에요
+def clustering(dataset):
+    sam_data = dataset.iloc[:, 1:3].values
+    agg_clustering = AgglomerativeClustering(n_clusters=500, linkage='average')
+    labels = agg_clustering.fit_predict(sam_data)
+    oncat([dataset,pd.DataFrame(labels)],axis = 1)
+    dataset.rename(columns={0:'label'},inplace=True)
+    return dataset
 
+#배럴타구에 적합한 타구들을 추출하는 함수에요
+def barrel_selection(dataset):
+    
+    barrel_df = pd.DataFrame()
+    hit_list = [1,2,3,4,7,15]
+    out_list = [5,6,7,8,9,10,11,12,13,14]
+    #-----------------------------------------------------------------------
+    #이 씹새끼가 아주 문제에요
+    #각 타구의 타율과 장타율을 계산해요
+    for i in range(0,500):
+        boonmo = 0
+        HIT_boonza = 0
+        SLG_boonza = 0
+        for j in range(len(dataset)):
+            if i == dataset.loc[j]['label']:
+                if dataset.loc[j]['HIT_RESULT'] in range(1,16):
+                    boonmo += 1
+                    if dataset.loc[j]['HIT_RESULT'] in hit_list:
+                        HIT_boonza += 1
+                        if dataset.loc[j]['HIT_RESULT'] in range(1,4):
+                            SLG_boonza += HTS_one.loc[j]['HIT_RESULT']*1
+                        elif dataset.loc[j]['HIT_RESULT'] != 15:
+                            SLG_boonza += 1
+                        elif dataset.loc[j]['HIT_RESULT'] == 15:
+                            SLG_boonza += 4
+        if boonmo == 0:
+            HIT_rate = 0
+            SLG_per = 0
+        else:
+            HIT_rate = HIT_boonza/boonmo
+            SLG_per = SLG_boonza/boonmo
+        barrel_sample_df = pd.DataFrame({'label':i,'HIT_rate':HIT_rate,'SLG_per':SLG_per},index = [0])
+        barrel_df = pd.concat([barrel_df,barrel_sample_df],ignore_index = True)
+        print(i)
+    #-------------------------------------------------------------------------
+    #타율 0.5, 장타율 1.5 이상인 타구들을 선별해요
+    barrel_list = []            
+    for i in range(0,500):
+        if barrel_df.loc[i]['HIT_rate'] > 0.5 and barrel_df.loc[i]['SLG_per'] > 1.5:
+            barrel_list.append(i)
 
-sam_data = HTS_df_total.iloc[0:30000, 0:2].values 
-standard_scaler = StandardScaler()
-sam_data_scaled = pd.DataFrame(standard_scaler.fit_transform(sam_data))
+    real_barrel_df = pd.DataFrame()                
+    for i in range(len(HTS_one)):
+        if HTS_one.loc[i]['label'] in barrel_list:
+            real_barrel_df = real_barrel_df.append(HTS_one.loc[i], ignore_index=True)
 
-data = [sam_data,sam_data_scaled]
+    return real_barrel_df
 
-linkage_list = ['single', 'complete', 'average', 'centroid', 'ward']        
+#클러스터링을 실행하고
+#타구들을 선별해요
+zzin_barrel_df = pd.DataFrame()
+for i in range(len(split_HTS)):
+    split_HTS[i] = clustering(split_HTS[i])
+    zzin_barrel_df = pd.cancat[zzin_barrel_df,barrel_selection(split_HTS[i])]
 
-fig, axes = plt.subplots(nrows=len(linkage_list), ncols=2, figsize=(16, 35))
-for i in range(len(linkage_list)):
-    for j in range(len(data)):  
-        hierarchical_single = linkage(data[j], method=linkage_list[i])
-        dn = dendrogram(hierarchical_single, ax=axes[i][j])
-        axes[i][j].title.set_text(linkage_list[i])
+#선별된 타구들의 산점도를 찍어봐요 ㅎㅎ
+scatter_plot = zzin_barrel_df.plot.scatter(x='HIT_VEL',y='HIT_ANG_VER')
+scatter_plot.plot()
 plt.show()
-
-
-from sklearn.cluster import AgglomerativeClustering
-agg_clustering = AgglomerativeClustering(n_clusters=500, linkage='average')
-labels = agg_clustering.fit_predict(sam_data)
-plt.figure(figsize=(20, 6))
-plt.subplot(131)
-sns.scatterplot(x=sam_data[:,0], y=sam_data[:,1], data=sam_data, hue=labels, palette='Set2')
-
-
-
-# =============================================================================
-# dbscan = DBSCAN(eps=0.1,min_samples=25)
-# clusters = pd.DataFrame(dbscan.fit_predict(HTS_scaled_df))    
-# clusters.columns=['predict']
-# clusters.value_counts()
-# 
-# 
-# r = pd.concat([HTS_scaled_df,clusters],axis=1)
-# 
-# sns.pairplot(r,hue='predict')
-# plt.show()
-# 
-# 
-# plt.scatter(HTS_scaled_df[:, 0], HTS_scaled_df[:, 1], c=clusters, cmap=mglearn.cm2, s=60, edgecolors='black')
-# plt.xlabel("attr 0")
-# plt.ylabel("attr 1")
-# 
-# 
-# plt.scatter(HTS_df_total.index,HTS_df_total[['HIT_ANG_VER']])
-# plt.show()
-# 
-# =============================================================================
-# =============================================================================
-# 
-# HTS_df_int = HTS_df_total.astype(int)
-# HTS_df_int[['HIT_VEL']].value_counts()
-# HTS_df_int[['HIT_ANG_VER']].value_counts()
-# 
-# HTS_df_int.describe()
-# HTS_df_int = HTS_df_int.assign(label = 0)
-# 
-# 
-# sns.distplot(HTS_df_int['HIT_VEL'])
-# sns.distplot(HTS_df_int['HIT_ANG_VER'])
-# HIT_VEL_list = []
-# HIT_ANG_VER_list = []
-# 
-# for j in HTS_df_int['HIT_VEL']:
-#     if not j in HIT_VEL_list:
-#         HIT_VEL_list.append(j)
-# 
-# for j in HTS_df_int['HIT_ANG_VER']:
-#     if not j in HIT_VEL_list:
-#         HIT_ANG_VER_list.append(j)
-# 
-# for i in HIT_VEL_list:
-#     for j in HIT_ANG_VER_list:
-# =============================================================================
-# =============================================================================
-#         
-# plt.figure(figsize=(10, 7))
-# plt.title("Customer Dendograms")
-# dend = shc.dendrogram(shc.linkage(data, method='ward'))        
-# =============================================================================
-
-# =============================================================================
-# cnt = 0
-# for i in HIT_VEL_list:
-#     for j in HIT_ANG_VER_list:
-#         cnt += 1
-#         for k in range(len(HTS_df_int)):
-#             if i == HTS_df_int.loc[k][0] and j == HTS_df_int.loc[k][1]:
-#                 HTS_df_int.loc[k,'label'] = cnt
-# =============================================================================
