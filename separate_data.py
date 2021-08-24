@@ -11,7 +11,7 @@ hts_2021 = pd.read_csv('hts_2021.csv')
 
 hts = pd.concat([hts_2018, hts_2019, hts_2020, hts_2021], ignore_index=True)
 
-hts.drop(['GYEAR', 'G_ID', 'PIT_ID', 'PCODE', 'T_ID', 'INN', 'STADIUM','HIT_RESULT', 'PIT_VEL'], axis=1, inplace=True)
+hts.drop(['GYEAR', 'G_ID', 'PCODE', 'T_ID', 'INN', 'STADIUM', 'PIT_VEL'], axis=1, inplace=True)
 
 hts_shuffled=hts.sample(frac=1).reset_index(drop=True)
 
