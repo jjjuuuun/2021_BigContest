@@ -22,7 +22,7 @@ HTS_df_total.drop(['GYEAR', 'G_ID', 'PIT_ID', 'PCODE', 'T_ID', 'INN', 'STADIUM',
 HTS_df_total = HTS_df_total[['HIT_VEL', 'HIT_ANG_VER']]
 
 
-sam_data = HTS_df_total.iloc[0:1000, 0:2].values 
+sam_data = HTS_df_total.iloc[0:30000, 0:2].values 
 standard_scaler = StandardScaler()
 sam_data_scaled = pd.DataFrame(standard_scaler.fit_transform(sam_data))
 
@@ -32,7 +32,7 @@ linkage_list = ['single', 'complete', 'average', 'centroid', 'ward']
 
 fig, axes = plt.subplots(nrows=len(linkage_list), ncols=2, figsize=(16, 35))
 for i in range(len(linkage_list)):
-    for j in range(len(data)):
+    for j in range(len(data)):  
         hierarchical_single = linkage(data[j], method=linkage_list[i])
         dn = dendrogram(hierarchical_single, ax=axes[i][j])
         axes[i][j].title.set_text(linkage_list[i])
@@ -40,7 +40,7 @@ plt.show()
 
 
 from sklearn.cluster import AgglomerativeClustering
-agg_clustering = AgglomerativeClustering(n_clusters=10, linkage='ward')
+agg_clustering = AgglomerativeClustering(n_clusters=500, linkage='average')
 labels = agg_clustering.fit_predict(sam_data)
 plt.figure(figsize=(20, 6))
 plt.subplot(131)
