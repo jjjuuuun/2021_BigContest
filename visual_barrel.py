@@ -71,7 +71,10 @@ up_slope, up_intercept, up_rvalue, up_pvalue, up_stderr = scipy.stats.linregress
 low_slope, low_intercept, low_rvalue, low_pvalue, low_stderr = scipy.stats.linregress(interval_10.HIT_VEL, interval_10.HIT_ANG_VER)
 
 def limit_line(x):
-    global up_slope, up_intercept, low_slope, low_intercept
+    up_slope = 0.15562915209790212
+    up_intercept = 32.48832867132867
+    low_slope = -0.14348317307692315
+    low_intercept = 23.852230769230772
     
     return up_slope * x + up_intercept, low_slope * x + low_intercept
     
