@@ -1,0 +1,97 @@
+import urllib.request as req
+import requests as reqs
+from bs4 import BeautifulSoup
+import urllib.parse as par
+import os
+import openpyxl
+from openpyxl.drawing.image import Image
+import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from selenium import webdriver
+import pyperclip
+from selenium.webdriver import ActionChains
+import time
+from selenium.webdriver.common.keys import Keys
+
+
+os.chdir("C:/Users/sj545/OneDrive/바탕 화면/2021_BigContest")
+
+
+hts_barrel_2018 = pd.read_csv("hts_barrel_2018.csv")
+hts_barrel_2019 = pd.read_csv("hts_barrel_2019.csv")
+hts_barrel_2020 = pd.read_csv("hts_barrel_2020.csv")
+hts_barrel_2021 = pd.read_csv("hts_barrel_2021.csv")
+
+
+
+daily_batter_2018 = pd.read_csv("daily_batter_2018.csv")
+daily_batter_2019 = pd.read_csv("daily_batter_2019.csv")    
+daily_batter_2020 = pd.read_csv("daily_batter_2020.csv")
+daily_batter_2021 = pd.read_csv("daily_batter_2021.csv")
+
+def cut_G_ID(x):
+    return x[0:8]
+    
+hts_barrel_2018['G_ID'] = hts_barrel_2018['G_ID'].apply(cut_G_ID)
+hts_barrel_2019['G_ID'] = hts_barrel_2019['G_ID'].apply(cut_G_ID)
+hts_barrel_2020['G_ID'] = hts_barrel_2020['G_ID'].apply(cut_G_ID)
+hts_barrel_2021['G_ID'] = hts_barrel_2021['G_ID'].apply(cut_G_ID)
+
+hts_barrel_2018['G_ID'] = hts_barrel_2018['G_ID'].apply(int)
+hts_barrel_2019['G_ID'] = hts_barrel_2019['G_ID'].apply(int)
+hts_barrel_2020['G_ID'] = hts_barrel_2020['G_ID'].apply(int)
+hts_barrel_2021['G_ID'] = hts_barrel_2021['G_ID'].apply(int)
+
+hts_isbarrel_2018 = hts_barrel_2018.drop(['PIT_ID','GYEAR','HIT_VEL','HIT_ANG_VER','HIT_RESULT','PIT_VEL'],axis=1)
+hts_isbarrel_2019 = hts_barrel_2019.drop(['PIT_ID','GYEAR','HIT_VEL','HIT_ANG_VER','HIT_RESULT','PIT_VEL'],axis=1)
+hts_isbarrel_2020 = hts_barrel_2020.drop(['PIT_ID','GYEAR','HIT_VEL','HIT_ANG_VER','HIT_RESULT','PIT_VEL'],axis=1)
+hts_isbarrel_2021 = hts_barrel_2021.drop(['PIT_ID','GYEAR','HIT_VEL','HIT_ANG_VER','HIT_RESULT','PIT_VEL'],axis=1)   
+
+hts_isbarrel_2018_sort = hts_isbarrel_2018.sort_values(by=['PCODE','G_ID'],ascending=[True,True])
+hts_isbarrel_2019_sort = hts_isbarrel_2019.sort_values(by=['PCODE','G_ID'],ascending=[True,True])
+hts_isbarrel_2020_sort = hts_isbarrel_2020.sort_values(by=['PCODE','G_ID'],ascending=[True,True])
+hts_isbarrel_2021_sort = hts_isbarrel_2021.sort_values(by=['PCODE','G_ID'],ascending=[True,True])
+
+hts_isbarrel_2018_sort.reset_index(inplace=True)
+hts_isbarrel_2019_sort.reset_index(inplace=True)
+hts_isbarrel_2020_sort.reset_index(inplace=True)
+hts_isbarrel_2021_sort.reset_index(inplace=True)
+
+def make_slg(hts_sort, daily):
+    #barrel 누적값 계산
+    hts_sort['barrel_count'] = hts_sort.groupby(['G_ID','PCODE'])['barrel'].cumsum()
+    
+    hts_sort.drop(['barrel','index'],inplace=True,axis=1)
+    
+    # 누적값 중 최댓값을 가져와서 배럴 개수 계산
+    hts_barrel_count = hts_sort.loc[hts_sort.groupby(["PCODE", "G_ID"])["barrel_count"].idxmax()]
+    # join
+    daily_barrel_count = pd.merge(daily,hts_barrel_count,on=['G_ID','PCODE'],how='left')
+    # barrel 생산률 계산
+    daily_barrel_count['barrel_per'] = daily_barrel_count['barrel_count'] / daily_barrel_count['PA'] 
+    # 결측치 제거
+    daily_barrel_count.dropna(axis=0,inplace=True)
+    
+    daily_barrel_count.drop('barrel_count',axis=1,inplace=True)
+    # 안타수 
+    daily_barrel_count['1B'] = daily_barrel_count['H'] - daily_barrel_count['2B'] - daily_barrel_count['3B'] - daily_barrel_count['HR']
+    # 장타율 계산
+    daily_barrel_count['SLG'] = (daily_barrel_count['1B'] + daily_barrel_count['2B'] * 2 + daily_barrel_count['3B'] * 3 + daily_barrel_count['HR'] * 4) / daily_barrel_count['AB']
+    # 누적 장타율 계산
+    daily_barrel_count['SLG_cumsum'] = (daily_barrel_count.groupby(['PCODE'])['1B'].cumsum() + daily_barrel_count.groupby(['PCODE'])['2B'].cumsum() * 2 + daily_barrel_count.groupby(['PCODE'])['3B'].cumsum() * 3 + daily_barrel_count.groupby(['PCODE'])['HR'].cumsum() * 4) / daily_barrel_count.groupby(['PCODE'])['AB'].cumsum()
+    daily_barrel_count.drop(['SB','CS', 'BB','HBP', 'SO', 'GDP', 'AVG2'],axis=1)
+    daily_barrel_count = daily_barrel_count[['PCODE', 'GYEAR', 'G_ID', 'STADIUM','AVG1', 'PA', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI','barrel_per', '1B', 'SLG', 'SLG_cumsum']]
+    return daily_barrel_count
+
+daily_slg_2018 = make_slg(hts_isbarrel_2018_sort,daily_batter_2018)
+daily_slg_2019 = make_slg(hts_isbarrel_2019_sort,daily_batter_2019)
+daily_slg_2020 = make_slg(hts_isbarrel_2020_sort,daily_batter_2020)
+daily_slg_2021 = make_slg(hts_isbarrel_2021_sort,daily_batter_2021)
+
+daily_slg_2018.to_csv("daily_slg_2018.csv",index=False)
+daily_slg_2019.to_csv("daily_slg_2019.csv",index=False)
+daily_slg_2020.to_csv("daily_slg_2020.csv",index=False)
+daily_slg_2021.to_csv("daily_slg_2021.csv",index=False)
