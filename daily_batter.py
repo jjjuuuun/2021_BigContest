@@ -76,7 +76,7 @@ def game_id(x):
     date_list = x.split('.')
     if int(date_list[0]) < 10:
         date_list[0] = '0' + str(int(date_list[0]))
-    if int(date_list[1]) < 10:
+    if len(date_list[1]) == 1 and int(date_list[1]) < 10:
         date_list[1] = str(int(date_list[1])) + '0'
     g_id = date_list[2] + date_list[0] + date_list[1]
     return g_id
