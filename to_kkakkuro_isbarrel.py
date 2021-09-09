@@ -11,7 +11,7 @@ user_path = input()
 os.chdir(user_path)
 
 ########################################################
-batter_df = pd.read_csv('bat.csv')
+batter_df = pd.read_csv('bat_all.csv')
 
 batter_2018 = batter_df[(batter_df['GYEAR'] == 2018)]
 batter_2019 = batter_df[(batter_df['GYEAR'] == 2019)]
@@ -60,7 +60,7 @@ hts_2019['barrel'] = hts_2019.apply(check_barrel, axis = 1)
 hts_2020['barrel'] = hts_2020.apply(check_barrel, axis = 1)
 hts_2021['barrel'] = hts_2021.apply(check_barrel, axis = 1)
 
-hts_2018.to_csv('to_kkakkuro_2018.csv', index = False)
-hts_2019.to_csv('to_kkakkuro_2019.csv', index = False)
-hts_2020.to_csv('to_kkakkuro_2020.csv', index = False)
-hts_2021.to_csv('to_kkakkuro_2021.csv', index = False)
+hts_2018.to_csv('to_kkakkuro_isBarrel_2018.csv', index = False)
+hts_2019.to_csv('to_kkakkuro_isBarrel_2019.csv', index = False)
+hts_2020.to_csv('to_kkakkuro_isBarrel_2020.csv', index = False)
+hts_2021.to_csv('to_kkakkuro_isBarrel_2021.csv', index = False)
